@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">HomeWork1</string>
+    <string name="name">Имя</string>
+    <string name="number">Номер</string>
+</resources>
