@@ -1,5 +1,8 @@
 package com.example.homework1
 
+import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
@@ -8,35 +11,41 @@ import android.support.v7.app.AppCompatActivity
 
 class SecondActivity : AppCompatActivity() {
 
-    //Обозначение кода действия, которое будет отслеживать BroadcastReceiver
     companion object {
         const val CUSTOM_ACTION = "CUSTOM_ACTION"
     }
 
-    //Ссыслка на экземпляр класса-наследника BroadcastReceiver
-    private lateinit var receiver : MyBroadcastReceiver
+    private lateinit var receiver : BroadcastReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
-        //Инициализация. Туда подгружается ссылка на эту активити, чтобы можно было ее закрыть из MyBroadcastReceiver
-        receiver = MyBroadcastReceiver(this)
+
+        receiver = object : BroadcastReceiver(){
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when(intent!!.action){
+                    SecondActivity.CUSTOM_ACTION -> {
+                        val data = Intent()
+                        data.putExtra(FirstActivity.EXTRA_ID, intent.getSerializableExtra(MyService.SERVICE_EXTRA_ID))
+                        setResult(Activity.RESULT_OK, data)
+                        finish()
+                    }
+                }
+            }
+        }
     }
 
     override fun onStart() {
         super.onStart()
-        //Резистрация LocalBroadcastManager
         val localBroadcastManager = LocalBroadcastManager.getInstance(this)
         localBroadcastManager.registerReceiver(receiver, IntentFilter(CUSTOM_ACTION))
 
-        //Запуск сервиса
         val intent = Intent(this, MyService::class.java)
         startService(intent)
     }
 
     override fun onStop() {
         super.onStop()
-        //Разрегистрация (?) LocalBroadcastManager
         val localBroadcastManager = LocalBroadcastManager.getInstance(this)
         localBroadcastManager.unregisterReceiver(receiver)
     }

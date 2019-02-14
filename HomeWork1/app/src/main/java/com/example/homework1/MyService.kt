@@ -4,12 +4,12 @@ import android.app.IntentService
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Parcelable
 import android.provider.ContactsContract
 import android.support.v4.content.LocalBroadcastManager
 
 class MyService : IntentService("MyService") {
 
-    //Константа, которая служит ключем для ParcelableArrayExtra в интенте
     companion object {
         const val SERVICE_EXTRA_ID = "SERVICE_EXTRA_ID"
     }
@@ -17,7 +17,6 @@ class MyService : IntentService("MyService") {
     override fun onHandleIntent(intent: Intent?) {
         val res = getContacts()
 
-        //Отправляем сообщение LocalBroadcastManager
         val localBroadcastManager = LocalBroadcastManager.getInstance(this)
 
         val returnIntent = Intent()
@@ -27,28 +26,22 @@ class MyService : IntentService("MyService") {
         localBroadcastManager.sendBroadcast(returnIntent)
     }
 
-    //Читаем контакты, загружаем их в массив
-    private fun getContacts() : Array<Contact>{
-        val contacts : Array<Contact>
+    private fun getContacts() : ArrayList<Contact>{
+        val contacts : ArrayList<Contact> = ArrayList()
         val uri: Uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
         val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
 
-        if(cursor!!.moveToFirst()){
-            contacts = Array(cursor.count) { Contact("name", "number") }
+        cursor?.use {
+            if(cursor.moveToFirst()){
 
-            val idName = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-            val idNumber = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-            var i = 0
+                val idName = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                val idNumber = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
 
-            do {
-                contacts[i] = Contact(cursor.getString(idName), cursor.getString(idNumber))
-                i++
-            } while (cursor.moveToNext())
-
-        } else
-            contacts = emptyArray()
-
-        cursor.close()
+                do {
+                    contacts.add(Contact(cursor.getString(idName), cursor.getString(idNumber)))
+                } while (cursor.moveToNext())
+            }
+        }
 
         return contacts
     }
